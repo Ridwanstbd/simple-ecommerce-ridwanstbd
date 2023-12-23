@@ -30,7 +30,6 @@ const ProductList = () => {
 
   return (
     <div className="w-full h-full relative grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 py-4">
-      {isLoading && <p>loading...</p>}
       {products.map((product) => {
         const minTitle = product.title.length > 25 ? `${product.title.substring(0, 25)} ...` : product.title;
         return (
