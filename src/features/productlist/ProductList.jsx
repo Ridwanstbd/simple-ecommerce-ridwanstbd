@@ -55,7 +55,7 @@ const ProductList = () => {
     const searchTerm = searchRefName.current.value;
 
     const searchResult = products.filter(product =>
-      product.title.toLowerCase().includes(searchTerm)
+      product.title.includes(searchTerm)
     );
 
     switch (sortType) {
