@@ -37,6 +37,12 @@ const CartModal = ({ handleHideModalCart }) => {
 
     window.open(URL, "_blank");
   };
+  const dollar = (number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(number)
+  }
 
   return (
     <Modal>
@@ -59,9 +65,9 @@ const CartModal = ({ handleHideModalCart }) => {
                   <div className="ml-10 w-[75%]">
                     <h3 className="capitalize mt-3 text-lg">{product.title}</h3>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm">{product.price}</h4>
+                      <h4 className="text-sm">{dollar(product.price)}</h4>
                       <h3 className="text-lg font-bold">
-                        {product.totalPrice}
+                        {dollar(product.totalPrice)}
                       </h3>
                     </div>
                     <div className="flex items-center gap-4 mt-4 ml-auto">
@@ -93,7 +99,7 @@ const CartModal = ({ handleHideModalCart }) => {
         </div>
         <div>
           <h3 className="text-md font-bold">Total Item: {totalItems}</h3>
-          <h3 className="text-md font-bold">Total Price: {totalPrice}</h3>
+          <h3 className="text-md font-bold">Total Price: {dollar(totalPrice)}</h3>
         </div>
         <div className="flex items-center justify-between">
           <button
