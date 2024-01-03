@@ -71,10 +71,16 @@ const ProductList = () => {
         )
         break;
       case "name-a-to-z":
-        setProducts([...products].sort((a, b) => a.title.localeCompare(b.title)));
+        setProducts(
+          searchTerm ? [...searchResult].sort((a, b) => a.title.localeCompare(b.title))
+            : [...products].sort((a, b) => a.title.localeCompare(b.title))
+        );
         break;
       case "name-z-to-a":
-        setProducts([...products].sort((a, b) => b.title.localeCompare(a.title)));
+        setProducts(
+          searchTerm ? [...searchResult].sort((a, b) => b.title.localeCompare(a.title))
+            : [...products].sort((a, b) => b.title.localeCompare(a.title))
+        );
         break;
       default:
         setProducts([...searchResult])
