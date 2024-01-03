@@ -8,6 +8,7 @@ import Modal from "../../components/Modal";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
+  const [originalProducts, setOriginalProducts] = useState([]);
   const [isLoading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const [isFilterModalOpen, setFilterModalOpen] = useState(false);
@@ -51,9 +52,9 @@ const ProductList = () => {
   }
 
   const handleFilter = () => {
-    //! Linear (sequential) search untuk data yang tidak terurut seperti judul
     const searchTerm = searchRefName.current.value;
 
+    //! Linear (sequential) search untuk data yang tidak terurut seperti judul
     const searchResult = products.filter(product =>
       product.title.includes(searchTerm)
     );
@@ -86,6 +87,13 @@ const ProductList = () => {
     setFilterModalOpen(false);
   }
 
+  const handleResetFilter = () => {
+    setSortType(null)
+    searchRefName.current.value = " ";
+    setProducts([...originalProducts])
+    setFilterModalOpen(false)
+  }
+
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -93,6 +101,7 @@ const ProductList = () => {
         const response = await fetch("https://fakestoreapi.com/products");
         const data = await response.json();
         setProducts(data);
+        setOriginalProducts(data)
       } catch (error) {
         console.error(error);
       } finally {
@@ -198,12 +207,20 @@ const ProductList = () => {
                 </select>
               </div>
             </div>
-            <button
-              className="bg-blue-700 text-white hover:bg-blue-800 rounded-lg text-sm py-1 px-2"
-              onClick={handleFilter}
-            >
-              Apply
-            </button>
+            <div className="flex justify-between">
+              <button
+                className="bg-blue-700 text-white hover:bg-blue-800 rounded-lg text-sm py-1 px-2"
+                onClick={handleFilter}
+              >
+                Apply
+              </button>
+              <button
+                className="text-gray-500 hover:underline"
+                onClick={handleResetFilter}
+              >
+                Reset
+              </button>
+            </div>
           </div>
         </Modal>
       )}
