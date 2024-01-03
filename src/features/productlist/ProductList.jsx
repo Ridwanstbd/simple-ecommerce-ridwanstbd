@@ -56,23 +56,19 @@ const ProductList = () => {
 
     //! Linear (sequential) search untuk data yang tidak terurut seperti judul
     const searchResult = products.filter(product =>
-      product.title.includes(searchTerm)
+      product.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     switch (sortType) {
       case "price-low-to-high":
-        if (!searchTerm) {
-          setProducts(bucketSort([...products], "price"));
-        } else {
-          setProducts(bucketSort([...searchResult], "price"));
-        }
+        setProducts(
+          searchTerm ? bucketSort([...searchResult], "price") : bucketSort([...products], "price")
+        )
         break;
       case "price-high-to-low":
-        if (!searchTerm) {
-          setProducts(bucketSort([...products], "price").reverse());
-        } else {
-          setProducts(bucketSort([...searchResult], "price").reverse());
-        }
+        setProducts(
+          searchTerm ? bucketSort([...searchResult], "price").reverse() : bucketSort([...products], "price").reverse()
+        )
         break;
       case "name-a-to-z":
         setProducts([...products].sort((a, b) => a.title.localeCompare(b.title)));
