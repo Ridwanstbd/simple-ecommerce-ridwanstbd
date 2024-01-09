@@ -1,117 +1,53 @@
 /* eslint-disable react/prop-types */
-import { useRef, useState, useEffect } from "react";
+import { useEffect } from "react";
 import Star from "../productlist/assets/star.svg";
 import FilterIcon from "../productlist/assets/filter.svg";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addItemToCart } from "../cart/cartSlice";
-import Modal from "../../components/Modal";
+import { selectFilter } from "../filter/filterSlice"
+import {
+  setProducts,
+  setLoading,
+  selectProducts,
+} from "./productSlice";
 
-const ProductList = () => {
-  const [products, setProducts] = useState([]);
-  const [originalProducts, setOriginalProducts] = useState([]);
-  const [isLoading, setLoading] = useState(false);
+const ProductList = ({ handleOpenModalFilter }) => {
+  const { items: products, isLoading } = useSelector(selectProducts)
+  const { search, sortMethod } = useSelector(selectFilter);
   const dispatch = useDispatch();
-  const [isFilterModalOpen, setFilterModalOpen] = useState(false);
-  const [sortType, setSortType] = useState(null);
-  const searchRefName = useRef()
-
-  //! bucket Sort untuk mengurutkan data
-  const bucketSort = (array, key) => {
-    const bucketSize = 10;
-    const min = Math.min(...array.map(item => item[key]))
-    const max = Math.max(...array.map(item => item[key]))
-
-    const bucketCount = Math.floor((max - min) / bucketSize) + 1;
-    const buckets = Array.from({ length: bucketCount }, () => [])
-
-    //! distribusi ke elemen
-    array.forEach(item => {
-      const bucketIndex = Math.floor((item[key] - min) / bucketSize)
-      buckets[bucketIndex].push(item)
-    })
-
-    //! sorting setiap bucket
-    buckets.forEach(bucket => {
-      insertionSort(bucket, key)
-    })
-
-    //! Menggabungkan bucket kedalam satu array
-    return buckets.flat();
-  }
-
-  const insertionSort = (array, key) => {
-    for (let i = 1; i < array.length; i++) {
-      const currentElement = array[i]
-      let j = i - 1
-      while (j >= 0 && array[j][key] > currentElement[key]) {
-        array[j + 1] = array[j]
-        j--
-      }
-      array[j + 1] = currentElement;
-    }
-  }
-
-  const handleFilter = () => {
-    const searchTerm = searchRefName.current.value;
-
-    //! Linear (sequential) search untuk data yang tidak terurut seperti judul
-    const searchResult = products.filter(product =>
-      product.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    switch (sortType) {
-      case "price-low-to-high":
-        setProducts(
-          searchTerm ? bucketSort([...searchResult], "price") : bucketSort([...products], "price")
-        )
-        break;
-      case "price-high-to-low":
-        setProducts(
-          searchTerm ? bucketSort([...searchResult], "price").reverse() : bucketSort([...products], "price").reverse()
-        )
-        break;
-      case "name-a-to-z":
-        setProducts(
-          searchTerm ? [...searchResult].sort((a, b) => a.title.localeCompare(b.title))
-            : [...products].sort((a, b) => a.title.localeCompare(b.title))
-        );
-        break;
-      case "name-z-to-a":
-        setProducts(
-          searchTerm ? [...searchResult].sort((a, b) => b.title.localeCompare(a.title))
-            : [...products].sort((a, b) => b.title.localeCompare(a.title))
-        );
-        break;
-      default:
-        setProducts([...searchResult])
-        break;
-    }
-    setFilterModalOpen(false);
-  }
-
-  const handleResetFilter = () => {
-    setSortType(null)
-    searchRefName.current.value = " ";
-    setProducts([...originalProducts])
-    setFilterModalOpen(false)
-  }
 
   useEffect(() => {
     const fetchProducts = async () => {
-      setLoading(true);
+      dispatch(setLoading(true))
       try {
         const response = await fetch("https://fakestoreapi.com/products");
         const data = await response.json();
-        setProducts(data);
-        setOriginalProducts(data)
+        dispatch(setProducts(data))
       } catch (error) {
         console.error(error);
       } finally {
-        setLoading(false);
+        dispatch(setLoading(false));
       }
     };
     fetchProducts();
-  }, []);
+  }, [dispatch]);
+
+  const filteredProducts = products.filter((product) => product.title.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      switch (sortMethod) {
+        case "price-low-to-high":
+          return a.price - b.price;
+        case "price-high-to-low":
+          return b.price - a.price;
+        case "name-a-to-z":
+          return a.title.localeCompare(b.title);
+        case "name-z-to-a":
+          return b.title.localeCompare(a.title);
+        default:
+          return 0;
+      }
+    });
+
 
   const handleClickBuy = (product) => {
     dispatch(addItemToCart(product));
@@ -129,7 +65,7 @@ const ProductList = () => {
         <button
           className="relative text-gray-100 bg-blue-800 px-6 py-1 rounded-full flex gap-2"
           type="button"
-          onClick={() => setFilterModalOpen(true)}
+          onClick={handleOpenModalFilter}
         >
           <img src={FilterIcon} alt="filter" className="w-6 h-6" />
           <p>Filter</p>
@@ -142,7 +78,7 @@ const ProductList = () => {
             className="absolute loading"
           ></div>
         </div>
-      </div>) || products.map((product) => {
+      </div>) || filteredProducts.map((product) => {
         const minTitle = product.title.length > 25 ? `${product.title.substring(0, 25)} ...` : product.title;
         return (
           <div
@@ -177,55 +113,6 @@ const ProductList = () => {
           </div>
         );
       })}
-      {isFilterModalOpen && (
-        <Modal onClose={() => setFilterModalOpen(false)}>
-          <div className="p-4 relative">
-            <h2 className="text-lg font-semibold mb-4">Filter</h2>
-            <div className="mb-4 flex flex-col gap-3">
-              <div className="flex flex-col">
-                <label className="text-gray-500">Search </label>
-                <div className="relative">
-                  <input
-                    placeholder="Search By Name .."
-                    className="w-full p-2 rounded"
-                    ref={searchRefName}
-                  />
-
-                </div>
-
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-gray-500">Sort By:</label>
-                <select
-                  className="bg-white border border-gray-300 rounded px-3 py-1"
-                  onChange={(e) => setSortType(e.target.value)}
-                >
-                  <option value="default">Default</option>
-                  <option value="price-low-to-high">Price Low to High</option>
-                  <option value="price-high-to-low">Price High to Low</option>
-                  <option value="name-a-to-z">Name A to Z</option>
-                  <option value="name-z-to-a">Name Z to A</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-between">
-              <button
-                className="bg-blue-700 text-white hover:bg-blue-800 rounded-lg text-sm py-1 px-2"
-                onClick={handleFilter}
-              >
-                Apply
-              </button>
-              <button
-                className="text-gray-500 hover:underline"
-                onClick={handleResetFilter}
-              >
-                Reset
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
 
     </div>
   );
